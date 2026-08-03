@@ -4,7 +4,7 @@ import os
 import subprocess
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
-
+import json
 
 def main():
     formats = ".mp3"
@@ -15,19 +15,35 @@ def main():
     except pygame.error as e:
         print('Audio initialization failed',e)
         return
-
-    #Busco y creo la carpeta con la musica si esta no existe
+        
+    #Busco y creo la carpeta de la musica si esta no existe
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     MUSIC_DIR = os.path.join(BASE_DIR, 'Music')
 
     if not os.path.isdir(MUSIC_DIR):
         os.mkdir(MUSIC_DIR)
 
-    for files in os.listdir(MUSIC_DIR):
+    #Revisamos la carpeta del JSON si existe
+    if os.path.isfile("config.json"):
+        #Creo el json y guardo la ruta inicial
+        with open('config.json','r') as f:
+            active_dir = json.load(f)
+
+            #Si no existe el JSON, fijo el directorio a la default
+            if not os.path.isfile("config.json"):
+                active_dir = MUSIC_DIR
+    
+    #Si es la primera vez que se abrem guarda la ruta inicial en el JSON
+    else:
+        active_dir = MUSIC_DIR
+        with open("config.json","w") as f:
+            json.dump(active_dir,f)
+
+    for files in os.listdir(active_dir):
         if files.lower().endswith(formats):
             songs.append(files)
 
-    UI(songs, MUSIC_DIR)
+    UI(songs,active_dir)
     return 0
 
 def get_song_path(song_name,state):
@@ -119,23 +135,26 @@ def open_folder(base_dir,state):
 
 def change_folder(playlist,state):
     new_drt = (filedialog.askdirectory(title='Open a songs directory'))
-    
+    formats = ".mp3"
     if new_drt:
-        state['current_directory'] = new_drt
+        state['current_directory'] = new_drt 
 
+        #Abro el json y leo la ruta
+        with open('config.json','w') as f:
+            json.dump(new_drt,f)
+        
         playlist.delete(0, tk.END)
-        formats = ".mp3"
         for file in os.listdir(new_drt):
             if file.lower().endswith(formats):
                 playlist.insert(tk.END,file)
 
 
-def UI(files,base_dir):
+def UI(files, active_dir):
     state = {
         "playing": False,
         "paused": False,
         "current_file":None,
-        "current_directory": base_dir
+        "current_directory": active_dir
         }    
 
     #Canvas
@@ -188,7 +207,7 @@ def UI(files,base_dir):
     prev_song_btn.place(x = 15, y = 10)
 
     #Manejador de directorio
-    open_folder_btn = tk.Button(btn_frame, text='Open folder', bg='Aqua', width = 18, command=lambda:open_folder(base_dir,state))
+    open_folder_btn = tk.Button(btn_frame, text='Open folder', bg='Aqua', width = 18, command=lambda:open_folder(state['current_directory'],state))
     open_folder_btn.place(x=20, y = 60)
 
     change_folder_btn = tk.Button(btn_frame, text='Change folder', bg='Aqua', width = 18,command=lambda:change_folder(playlist,state))
