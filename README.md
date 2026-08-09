@@ -1,4 +1,4 @@
-# 🎵 Music Player (v1.0)
+# 🎵 Music Player
 
 Un reproductor de música de escritorio ligero y moderno desarrollado en Python. Utiliza **CustomTkinter** para la interfaz gráfica adaptativa y **Pygame** para la reproducción de audio.
 
